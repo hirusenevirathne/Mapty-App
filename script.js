@@ -10,48 +10,168 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
-let map, mapEvent; // declare map and mapEvent variables
 
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    //  call the API and get the current position
-    function (position) {
-      // success callback
-      const { latitude } = position.coords;
-      const { longitude } = position.coords;
-      console.log(latitude, longitude);
-      console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
+class Workout {
+  date = new Date();
+  id = (Date.now() + '').slice(-10); //Usually use a libary to crete a ID
 
-      const coords = [latitude, longitude]; // store the coordinates in an array
+  constructor(coords, distance, duration) {
+    this.coords = coords; // [lot, lng]
+    this.distance = distance; // in km
+    this.duration = duration; // in min
+  }
+}
 
-      map = L.map('map').setView(coords, 16); // store map in a variable
+class Running extends Workout {
+  type = 'running'; // create a property
+  constructor(coords, distance, duration, cadence) {
+    super(coords, distance, duration); // from perent class
+    this.cadence = cadence;
+    this.calcPace();
+  }
+  calcPace() {
+    // min/km
+    this.pace = this.duration / this.distance;
+    return this.pace;
+  }
+}
+class Cycling extends Workout {
+  type = 'cycling'; // create a property
+  constructor(coords, distance, duration, elevation) {
+    super(coords, distance, duration); // from perent class
+    this.elevation = elevation;
+    this.calcSpeed();
+  }
+  calcSpeed() {
+    // km/h
+    this.speed = this.distance / (this.duration / 60);
+    return this.speed;
+  }
+}
 
-      L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+class App {
+  // Main class
+  #map;
+  #mapEvent;
+  #workouts = [];
+  constructor() {
+    // constructor method
 
-      // add a marker
-      map.on('click', function (mapE) {
-        // listen to the click event on the map
-        mapEvent = mapE; // store the map event in a variable
-        form.classList.remove('hidden'); // show the form when the map is clicked
-        inputDistance.focus(); // focus on the input field
-      });
-    },
-    function () {
-      // error callback
-      alert('Could not get your position');
+    this._getPosition(); // call the getPosition method
+    form.addEventListener('submit', this._newWorkout.bind(this)); //pass the _newWorkout method
+    inputType.addEventListener('change', this._toggleElevationField); //no need to bind coz this not using in the method
+  }
+
+  _getPosition() {
+    // get the current position from user
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        this._loadMap.bind(this),
+        function () {
+          // call as aregular function so need to bind this keyword
+          //  call the API and get the current position
+          alert('Could not get your position'); // error callback
+        }
+      );
     }
-  );
-  form.addEventListener('submit', function (e) {
+  }
+
+  _loadMap(position) {
+    // load the map
+    const { latitude } = position.coords;
+    const { longitude } = position.coords;
+    //console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
+
+    const coords = [latitude, longitude]; // store the coordinates in an array
+
+    this.#map = L.map('map').setView(coords, 16); // store map in a variable
+
+    L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.#map);
+
+    // add a marker
+    this.#map.on('click', this._showForm.bind(this));
+  }
+
+  _showForm(mapE) {
+    // show the workout form
+    this.#mapEvent = mapE; // store the map event in a variable
+    form.classList.remove('hidden'); // show the form when the map is clicked
+    inputDistance.focus(); // focus on the input field
+  }
+
+  _toggleElevationField() {
+    // toggle the elevation field
+    inputElevation.closest('.form__row').classList.toggle('form__row--hidden'); // toggle the hidden class on the elevation field
+    inputCadence.closest('.form__row').classList.toggle('form__row--hidden'); // toggle the hidden class on the cadence field
+  }
+
+  _newWorkout(e) {
+    // create a new workout
+    // Helper funtions
+    const validInputs = (...inputs) =>
+      inputs.every(inp => Number.isFinite(inp)); //return true only if all the input values are finite
     e.preventDefault(); // prevent the form from submitting
+    const allPositive = (...inputs) => inputs.every(inp => inp > 0); //return true if only all values are positive
 
-    //console.log(mapEvent);
-    const { lat, lng } = mapEvent.latlng; // get the coordinates of the click event
+    // Get data from form
+    const type = inputType.value; //get what is the workout
+    const distance = +inputDistance.value; //get the distance value and convert it to a number
+    const duration = +inputDuration.value; //get the duration value and convert it to a number
+    const { lat, lng } = this.#mapEvent.latlng; // get the coordinates of the click event
+    let workout; // create a variable to store the workout
 
-    L.marker([lat, lng]) // create a marker
-      .addTo(map) // add a marker to the map
+    // if workout running create running object
+    //check data validation
+    if (type === 'running') {
+      const cadence = +inputCadence.value; //get the cadence if its running
+      if (
+        !validInputs(distance, duration, cadence) ||
+        !allPositive(distance, duration, cadence)
+      ) {
+        //Gurd clouser Modern JS use this commonly
+        return alert('Inputs have to be positive numbers !');
+      }
+      workout = new Running([lat, lng], distance, duration, cadence); // create a new object from the Running
+    }
+
+    // if workout cycling create cycling object
+    //check data validation
+    if (type === 'cycling') {
+      const elevation = +inputElevation.value; //get the elevation if its cycling
+      if (
+        !validInputs(distance, duration, elevation) ||
+        !allPositive(distance, duration)
+      ) {
+        //Gurd clouser Modern JS use this commonly
+        return alert('Inputs have to be positive numbers !');
+      }
+      workout = new Cycling([lat, lng], distance, duration, elevation); // create a new object from the Cycling
+    }
+
+    // add new object to workout array
+    this.#workouts.push(workout); // add new object to workout array as a property
+    //console.log(workout);
+
+    // render workout on map as marker
+    this.renderWorkoutMarker(workout); // call the renderWorkoutMarker method
+
+    // hide form + Clear input fields
+
+    // Clear input fields
+    inputDistance.value =
+      inputDuration.value =
+      inputCadence.value =
+      inputElevation.value =
+        '';
+  }
+  renderWorkoutMarker(workout) {
+    // render workout on the map as marker
+
+    L.marker(workout.coords) // create a marker
+      .addTo(this.#map) // add a marker to the map
       .bindPopup(
         L.popup({
           //setup popup
@@ -59,10 +179,12 @@ if (navigator.geolocation) {
           minWidth: 100,
           autoClose: false, // popup will not auto close
           closeOnClick: false, // popup will not close when we click on the map
-          className: 'running-popup', // add class to popup
+          className: `${workout.type}-popup`, // add class to popup
         })
       ) //bind popup to the marker
-      .setPopupContent('Workout') // add content to the popup
+      .setPopupContent(workout.type) // add content to the popup
       .openPopup(); // open the popup
-  });
+  }
 }
+
+const app = new App(); // create a new object from the App class
