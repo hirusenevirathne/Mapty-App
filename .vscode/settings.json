@@ -1,0 +1,68 @@
+[{
+    "workbench.colorTheme": "1Dark RainCoat Bright Italic",
+    "code-runner.runInTerminal": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  
+  {
+    "todohighlight.isEnable": true,
+    "todohighlight.isCaseSensitive": true,
+    "todohighlight.keywords": [
+      "DEBUG:",
+      "REVIEW:",
+      {
+        "text": "NOTE:",
+        "color": "#ff0000",
+        "backgroundColor": "yellow",
+        "overviewRulerColor": "grey"
+      },
+      {
+        "text": "HACK:",
+        "color": "#000",
+        "isWholeLine": false
+      },
+      {
+        "text": "TODO:",
+        "color": "red",
+        "border": "1px solid red",
+        "borderRadius": "2px",
+        "backgroundColor": "rgba(0,0,0,.2)"
+      }
+    ],
+    "todohighlight.keywordsPattern": "TODO:|FIXME:|\\(([^)]+)\\)", 
+    "todohighlight.defaultStyle": {
+      "color": "red",
+      "backgroundColor": "#ffab00",
+      "overviewRulerColor": "#ffab00",
+      "cursor": "pointer",
+      "border": "1px solid #eee",
+      "borderRadius": "2px",
+      "isWholeLine": true
+    },
+    "todohighlight.include": [
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.html",
+      "**/*.php",
+      "**/*.css",
+      "**/*.scss"
+    ],
+    "todohighlight.exclude": [
+      "**/node_modules/**",
+      "**/bower_components/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.vscode/**",
+      "**/.github/**",
+      "**/_output/**",
+      "**/*.min.*",
+      "**/*.map",
+      "**/.next/**"
+    ],
+    "todohighlight.maxFilesForSearch": 5120,
+    "todohighlight.toggleURI": false
+  }
+  ]
