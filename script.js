@@ -11,6 +11,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10); //Usually use a libary to crete a ID
+  clicks = 0;
 
   constructor(coords, distance, duration) {
     this.coords = coords; // [lot, lng]
@@ -25,6 +26,10 @@ class Workout {
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
       month[this.date.getMonth()]
     } ${this.date.getDate()}`;
+  }
+
+  click() {
+    this.clicks++;
   }
 }
 
@@ -60,12 +65,16 @@ class Cycling extends Workout {
 class App {
   // Main class
   #map;
+  #mapZoomLevel = 16;
   #mapEvent;
   #workouts = [];
   constructor() {
     // constructor method
-
     this._getPosition(); // call the getPosition method
+
+    this._getLocalStorage(); //get data from local storage
+
+    //attach event handlers
     form.addEventListener('submit', this._newWorkout.bind(this)); //pass the _newWorkout method
     inputType.addEventListener('change', this._toggleElevationField); //no need to bind coz this not using in the method
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this)); // add event lisner to workout form
@@ -93,7 +102,7 @@ class App {
 
     const coords = [latitude, longitude]; // store the coordinates in an array
 
-    this.#map = L.map('map').setView(coords, 16); // store map in a variable
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel); // store map in a variable
 
     L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
@@ -102,6 +111,11 @@ class App {
 
     // add a marker
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workouts.forEach(work => {
+      // Render the markers on the map after it loards
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapE) {
@@ -178,10 +192,15 @@ class App {
 
     // render workout on map as marker
     this._renderWorkoutMarker(workout); // call the renderWorkoutMarker method
+
+    //remder workout on list
     this._renderWorkout(workout);
 
     // hide form + Clear input fields
     this._hideForm();
+
+    //set local storage to all workouts
+    this._setLocalStorage();
   }
   _renderWorkoutMarker(workout) {
     // render workout on the map as marker
@@ -257,7 +276,46 @@ class App {
 
   _moveToPopup(e) {
     //move to popup method
-    const workoutEl = e.target.closest;
+
+    const workoutEl = e.target.closest('.workout'); //target the perent class of the elemet to select all
+
+    if (!workoutEl) return; //gurd close for null output
+
+    const workout = this.#workouts.find(
+      work => work.id === workoutEl.dataset.id
+    ); // select the correct workout element from the workout array
+
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      //set veiw method is from leaflet API
+      animate: true,
+      pan: { duration: 1 }, // add animation and time to event
+    });
+
+    //using the public Interface
+    //workout.click(); // coz local storage object are not inherit from the perent clasesses
+  }
+
+  __setLocalStorage() {
+    //save on local Storage method
+    //using localstorage API
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts)); //convert object into a string for saving in local storage
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts')); //get saved workout from local storage and convert them to objects
+
+    if (!data) return; //gaurd close if no data
+
+    this.#workouts = data;
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+    });
+  }
+
+  reset() {
+    //remove local storage and reload page
+    localStorage.removeItem('workouts');
+    location.reload();
   }
 }
 
