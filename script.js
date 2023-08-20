@@ -68,6 +68,7 @@ class App {
     this._getPosition(); // call the getPosition method
     form.addEventListener('submit', this._newWorkout.bind(this)); //pass the _newWorkout method
     inputType.addEventListener('change', this._toggleElevationField); //no need to bind coz this not using in the method
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this)); // add event lisner to workout form
   }
 
   _getPosition() {
@@ -198,7 +199,7 @@ class App {
         })
       ) //bind popup to the marker
       .setPopupContent(
-        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.type}`
+        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       ) // add content to the popup
       .openPopup(); // open the popup
   }
@@ -252,6 +253,11 @@ class App {
       `;
     }
     form.insertAdjacentHTML('afterend', html); //add html element to form.
+  }
+
+  _moveToPopup(e) {
+    //move to popup method
+    const workoutEl = e.target.closest;
   }
 }
 
