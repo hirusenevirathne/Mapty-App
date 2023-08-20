@@ -24,7 +24,7 @@ class Workout {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
-      month[this.date.getMonth()]
+      months[this.date.getMonth()]
     } ${this.date.getDate()}`;
   }
 
@@ -295,7 +295,7 @@ class App {
     //workout.click(); // coz local storage object are not inherit from the perent clasesses
   }
 
-  __setLocalStorage() {
+  _setLocalStorage() {
     //save on local Storage method
     //using localstorage API
     localStorage.setItem('workouts', JSON.stringify(this.#workouts)); //convert object into a string for saving in local storage
